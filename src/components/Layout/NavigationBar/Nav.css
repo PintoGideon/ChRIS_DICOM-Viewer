@@ -1,0 +1,16 @@
+.nav-bar {
+  background: #06c;
+  width: 650px;
+}
+.nav-bar__icon {
+  height: 2.5em;
+}
+
+.nav-bar__text {
+  font-weight: 700;
+  margin-left: 2em !important;
+}
+
+.pf-c-nav {
+  padding: 3em, 1.5em;
+}
