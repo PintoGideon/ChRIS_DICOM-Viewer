@@ -51,8 +51,8 @@ const DrawerComponent: React.FC<DrawerProps> = ({
           </SimpleListItem>
 
           {openMenu && (
-            <SimpleListItem aria-label="Simple List">
-              <SimpleListItem key="file-manager">
+            <>
+              <SimpleListItem key="folder-manager">
                 <div className="drawer-panel__file-manager">
                   <FolderIcon size="md" />
                   <TextContent>
@@ -68,7 +68,7 @@ const DrawerComponent: React.FC<DrawerProps> = ({
                   </TextContent>
                 </div>
               </SimpleListItem>
-            </SimpleListItem>
+            </>
           )}
         </SimpleList>
       </DrawerHead>

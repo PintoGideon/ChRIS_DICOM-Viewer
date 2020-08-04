@@ -1,10 +1,12 @@
-import { PropsFromRedux } from "./index";
+import DicomViewer, { PropsFromRedux } from "./index";
 
 export type DicomProps = PropsFromRedux & {
   index: number;
-  dcmRef: (ref: React.RefObject<HTMLInputElement>) => void;
-  dicomViewersRefs: React.RefObject<HTMLInputElement>[];
-  runTool: (ref: React.RefObject<HTMLInputElement>) => void;
+  dcmRef: (ref: any) => void;
+  runTool: (ref: any) => void;
+  dicomViewersRefs: any[];
+  overlay: boolean;
+  visible: boolean;
 };
 
 export interface DicomState {

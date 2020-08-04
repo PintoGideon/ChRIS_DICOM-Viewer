@@ -7,6 +7,7 @@ import Drawer from "../../components/Layout/Drawer";
 import { getSettingsFsView } from "../../functions";
 import { localFileStore } from "../../store/actions";
 import { RootState } from "../../store/types";
+
 import DicomViewer from "../../components/DicomViewer";
 
 interface FileList {
@@ -23,10 +24,10 @@ class App extends PureComponent<AppProps, AppState> {
   dicomViewersActive: never[];
   dicomViewersSameStudy: never[];
   dicomViewersActiveSamePlane: never[];
-  dicomViewersRefs: React.RefObject<HTMLInputElement>[];
+  dicomViewersRefs: any[];
   dicomViewers: any[];
   fileOpen: React.RefObject<HTMLInputElement>;
-  runTool: React.RefObject<HTMLInputElement> | null;
+  runTool: (toolName: string, opt?: any) => void;
 
   constructor(props: AppProps) {
     super(props);
@@ -39,10 +40,10 @@ class App extends PureComponent<AppProps, AppState> {
     this.dicomViewersActiveSamePlane = [];
     this.dicomViewersRefs = [];
     this.dicomViewers = [];
-    this.runTool = null;
+    this.runTool = () => {};
 
     for (let i = 0; i < 16; i++) {
-      this.dicomViewers.push(this.setDcmViewer(i) as any);
+      this.dicomViewers.push(this.setDcmViewer(i));
     }
 
     this.fileOpen = React.createRef();
@@ -62,13 +63,19 @@ class App extends PureComponent<AppProps, AppState> {
     return (
       <DicomViewer
         index={index}
-        dcmRef={(ref: React.RefObject<HTMLInputElement>) => {
+        runTool={(ref: any) => {
+          return (this.runTool = ref.runTool);
+        }}
+        dcmRef={(ref: any) => {
           this.dicomViewersRefs[index] = ref;
         }}
         dicomViewersRefs={this.dicomViewersRefs}
-        runTool={(ref: React.RefObject<HTMLInputElement>) =>
-          (this.runTool = ref)
-        }
+        overlay={true}
+        visible={true}
+        //onLoadedImage={this.onLoadedImage}
+        //onRenderedImage={this.onRenderedImage}
+        //listOpenFilesPreviousFrame={this.listOpenFilesPreviousFrame}
+        //listOpenFilesNextFrame={this.listOpenFilesNextFrame}
       />
     );
   };
@@ -129,20 +136,66 @@ class App extends PureComponent<AppProps, AppState> {
         } else {
           this.setState({ sliceIndex: 0, sliceMax: 1 });
           this.props.setLocalFileStore(file);
-          //this.dicomViewersRefs[this.props.activeDcmIndex].runTool("clear");
-          /*
-          this.dicomViewerRefs[this.props.activeDcmIndex].runTool(
-            "openLocalFs",
-            file
+          console.log(
+            "Dicom Viewer Ref",
+            this.dicomViewers[this.props.activeDcmIndex],
+            this.props.activeDcmIndex
           );
-          */
+          this.runTool("clear");
+          this.runTool("openLocalFs", file);
+
+          //this.dicomViewers[0].runTool("clear");
+          //this.dicomViewers[0].runTool("openLocalFs", file);
         }
       }
     }
   };
 
+  getDcmViewer = (index: number) => {
+    return this.dicomViewers[index];
+  };
+
+  buildLayoutGrid = () => {
+    let dicomViewers = [];
+    for (let i = 0; i < this.props.layout[0]; i++) {
+      for (let j = 0; j < this.props.layout[1]; j++) {
+        const styleLayoutGrid = {
+          border:
+            this.props.layout[0] === 1 && this.props.layout[1] == 1
+              ? "solid 1px #000000"
+              : "solid 1px #444444",
+        };
+        const index = i * 4 + j;
+        dicomViewers.push(
+          <div key={index} style={styleLayoutGrid}>
+            {this.getDcmViewer(index)}
+          </div>
+        );
+      }
+    }
+    return (
+      <div
+        id="dicomviewer-grid"
+        style={{
+          display: "grid",
+          gridTemplateRows: `repeat(${this.props.layout[0]},${
+            100 / this.props.layout[0]
+          })`,
+          gridTemplateColumns: `repeat(${this.props.layout[1]},${
+            100 / this.props.layout[1]
+          })`,
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        {dicomViewers}
+      </div>
+    );
+  };
+
   render() {
     const { visibleMainMenu, openMenu } = this.state;
+    console.log("App-variables", this);
 
     return (
       <>
@@ -154,6 +207,9 @@ class App extends PureComponent<AppProps, AppState> {
           toggleOpenMenu={this.toggleOpenMenu}
           showFileOpen={this.showFileOpen}
         />
+        <div style={{ height: "calc(100vh-48px" }}>
+          {this.buildLayoutGrid()}
+        </div>
         <div>
           <input
             type="file"
@@ -161,6 +217,7 @@ class App extends PureComponent<AppProps, AppState> {
             style={{ display: "none" }}
             ref={this.fileOpen}
             onChange={(e) => this.handleOpenLocalFs(e.target.files)}
+            multiple
           />
         </div>
       </>
@@ -172,6 +229,7 @@ const mapStateToProps = (state: RootState) => {
   return {
     localFile: state.localFile,
     activeDcmIndex: state.activeDcmIndex,
+    layout: state.layout,
   };
 };
 

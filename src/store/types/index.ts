@@ -5,6 +5,7 @@ export interface RootState {
   localFile: File;
   activeDcmIndex: number;
   layout: number[];
+  isOpen: [];
   /*
         fsFile: null,
         files: null,
