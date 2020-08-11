@@ -1,4 +1,4 @@
-import { DCM_IS_OPEN, LOCALFILE_STORE } from "../types";
+import { DCM_IS_OPEN, LOCALFILE_STORE, LAYOUT, FILES_STORE } from "../types";
 
 export default function storeReducer(state = {}, action: any) {
   switch (action.type) {
@@ -11,6 +11,18 @@ export default function storeReducer(state = {}, action: any) {
       return {
         ...state,
         localFile: action.localFile,
+      };
+
+    case LAYOUT:
+      return {
+        ...state,
+        layout: action.layout,
+      };
+
+    case FILES_STORE:
+      return {
+        ...state,
+        files: action.files,
       };
   }
 

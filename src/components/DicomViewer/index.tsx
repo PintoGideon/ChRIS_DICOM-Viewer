@@ -35,6 +35,7 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
   isDicom: boolean;
   numberOfFrames: number;
   sopInstanceUid: string;
+  layoutIndex: number;
 
   constructor(props: DicomProps) {
     super(props);
@@ -47,6 +48,7 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
     this.isDicom = false;
     this.numberOfFrames = 1;
     this.sopInstanceUid = "";
+    this.layoutIndex = 0;
     this.state = {
       visibleOpenUrlDlg: false,
       progress: null,
@@ -59,12 +61,19 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
   componentDidMount() {
     this.props.runTool(this);
     const { dcmRef } = this.props;
+    cornerstone.events.addEventListener(
+      "cornerstoneimageLoaded",
+      this.onImageLoaded
+    );
     console.log("Dicom componentDidMount", dcmRef);
     dcmRef(this);
+    this.layoutIndex = this.props.index;
   }
   dicomImageRef = (e1: HTMLDivElement) => {
     this.dicomImage = e1;
   };
+
+  onImageLoaded = (e: any) => {};
 
   runTool = (toolName: string, opt: any) => {
     console.log("Run Tool called", toolName, opt);
@@ -185,7 +194,6 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
     }
     cornerstone.loadAndCacheImage(imageId).then((image: any) => {
       //this.hideOpenUrlDlg();
-      console.log("On track", image);
       this.image = image;
       this.isDicom = true;
       this.PatientsName = image.data.string("x00100010");
@@ -227,6 +235,7 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
             textShadow: "1px 1px #000000",
             visibility: visible,
           }}
+          className="cornerstone-enabled-image"
         >
           <div
             id={`viewer-${this.props.index}`}

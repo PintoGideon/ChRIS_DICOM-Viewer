@@ -4,8 +4,9 @@ import { connect, ConnectedProps } from "react-redux";
 import { AppProps, AppState } from "./types";
 import Navigation from "../../components/Layout/NavigationBar";
 import Drawer from "../../components/Layout/Drawer";
+import OpenMultipleFilesDlg from "../../components/OpenMultipleFilesDlg";
 import { getSettingsFsView } from "../../functions";
-import { localFileStore } from "../../store/actions";
+import { localFileStore, setLayout } from "../../store/actions";
 import { RootState } from "../../store/types";
 
 import DicomViewer from "../../components/DicomViewer";
@@ -112,9 +113,14 @@ class App extends PureComponent<AppProps, AppState> {
     if (this.fileOpen.current) this.fileOpen.current.click();
   };
 
+  changeLayout = (row: number, col: number) => {
+    this.props.setLayoutStore(row, col);
+  };
+
   handleOpenLocalFs = (filesSelected: FileList | null) => {
     if (filesSelected && filesSelected.length > 1) {
       this.files = Array.from(filesSelected).map((file: File) => file);
+      this.changeLayout(1, 1);
       this.setState(
         {
           sliceIndex: 0,
@@ -136,16 +142,8 @@ class App extends PureComponent<AppProps, AppState> {
         } else {
           this.setState({ sliceIndex: 0, sliceMax: 1 });
           this.props.setLocalFileStore(file);
-          console.log(
-            "Dicom Viewer Ref",
-            this.dicomViewers[this.props.activeDcmIndex],
-            this.props.activeDcmIndex
-          );
           this.runTool("clear");
           this.runTool("openLocalFs", file);
-
-          //this.dicomViewers[0].runTool("clear");
-          //this.dicomViewers[0].runTool("openLocalFs", file);
         }
       }
     }
@@ -161,7 +159,7 @@ class App extends PureComponent<AppProps, AppState> {
       for (let j = 0; j < this.props.layout[1]; j++) {
         const styleLayoutGrid = {
           border:
-            this.props.layout[0] === 1 && this.props.layout[1] == 1
+            this.props.layout[0] === 1 && this.props.layout[1] === 1
               ? "solid 1px #000000"
               : "solid 1px #444444",
         };
@@ -180,10 +178,10 @@ class App extends PureComponent<AppProps, AppState> {
           display: "grid",
           gridTemplateRows: `repeat(${this.props.layout[0]},${
             100 / this.props.layout[0]
-          })`,
+          }%)`,
           gridTemplateColumns: `repeat(${this.props.layout[1]},${
             100 / this.props.layout[1]
-          })`,
+          }%)`,
           height: "100%",
           width: "100%",
         }}
@@ -193,13 +191,39 @@ class App extends PureComponent<AppProps, AppState> {
     );
   };
 
+  hideOpenMultipleFilesDlg = () => {
+    this.setState({
+      visibleOpenMultipleFilesDlg: false,
+    });
+    this.openMultipleFilesCompleted();
+  };
+
+  openMultipleFilesCompleted = () => {
+    if (this.props.files !== null) {
+      this.changeLayout(1, 1);
+      this.runTool("openImage", 0);
+    }
+  };
+
   render() {
-    const { visibleMainMenu, openMenu } = this.state;
-    console.log("App-variables", this);
+    const {
+      visibleMainMenu,
+      openMenu,
+      visibleOpenMultipleFilesDlg,
+    } = this.state;
 
     return (
       <>
         <Navigation toggleMenu={this.toggleMainMenu} />
+        {visibleOpenMultipleFilesDlg ? (
+          <OpenMultipleFilesDlg
+            isModalOpen={visibleOpenMultipleFilesDlg}
+            onClose={this.hideOpenMultipleFilesDlg}
+            files={this.files}
+            origin="local"
+          />
+        ) : null}
+
         <Drawer
           isExpanded={visibleMainMenu}
           toggleMenu={this.toggleOpenMenu}
@@ -207,7 +231,7 @@ class App extends PureComponent<AppProps, AppState> {
           toggleOpenMenu={this.toggleOpenMenu}
           showFileOpen={this.showFileOpen}
         />
-        <div style={{ height: "calc(100vh-48px" }}>
+        <div style={{ height: "calc(100vh-48px)" }}>
           {this.buildLayoutGrid()}
         </div>
         <div>
@@ -230,12 +254,14 @@ const mapStateToProps = (state: RootState) => {
     localFile: state.localFile,
     activeDcmIndex: state.activeDcmIndex,
     layout: state.layout,
+    files: state.files,
   };
 };
 
 const mapDispatchToProps = (dispatch: Dispatch) => {
   return {
     setLocalFileStore: (file: File) => dispatch(localFileStore(file)),
+    setLayoutStore: (row: number, col: number) => dispatch(setLayout(row, col)),
   };
 };
 
