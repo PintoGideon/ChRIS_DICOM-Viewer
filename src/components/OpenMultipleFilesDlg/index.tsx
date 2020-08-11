@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Dispatch } from "redux";
 import { connect, ConnectedProps } from "react-redux";
 import { Modal } from "@patternfly/react-core";
@@ -31,16 +31,9 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
   files,
   origin,
   onClose,
+  filesStore,
 }) => {
-  const [modalState, setModalState] = React.useState({
-    progress: 0,
-    cancel: false,
-  });
-
-  let items: Item[] = [];
-  let count = 0;
-  let step = 0;
-
+  let items = useRef<Item[]>([]);
   React.useEffect(() => {
     let imageIds: string[] = [];
     for (let i = 0; i < files.length; i++) {
@@ -56,12 +49,6 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (modalState.cancel) {
-        filesStore(null);
-        close();
-        return;
-      }
-      console.log("Image Ids", imageIds[i]);
       cornerstone.loadImage(imageIds[i]).then((image: any) => {
         const patientName = getDicomPatientName(image);
 
@@ -88,6 +75,7 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
             : dicomDateTimeToLocale(`${studyDate}.${studyTime}`);
 
         let item = null;
+        let itemsToPush: Item[] = [];
 
         if (origin === "local") {
           item = {
@@ -146,16 +134,19 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
             },
           };
         }
-        items.push(item);
+        items.current.push(item);
+        filesStore(items.current);
+        close();
       });
-      filesStore(items);
-      // close();
     }
   }, []);
 
   const close = () => {
+    console.log("Close called");
     onClose();
   };
+
+  console.log("IsModalOpen", isModalOpen);
 
   return (
     <Modal width={"50%"} title="Multiple Files Dialog box" isOpen={isModalOpen}>

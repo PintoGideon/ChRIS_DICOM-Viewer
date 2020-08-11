@@ -19,8 +19,7 @@ interface FileList {
 
 class App extends PureComponent<AppProps, AppState> {
   files: File[];
-  file: File | null;
-  //url: string;
+  file: File | null;//url: string;
   folder: null;
   dicomViewersActive: never[];
   dicomViewersSameStudy: never[];
@@ -199,7 +198,8 @@ class App extends PureComponent<AppProps, AppState> {
   };
 
   openMultipleFilesCompleted = () => {
-    if (this.props.files !== null) {
+    console.log("Files", this.props.files);
+    if (this.props.files.length !== null) {
       this.changeLayout(1, 1);
       this.runTool("openImage", 0);
     }
@@ -250,6 +250,7 @@ class App extends PureComponent<AppProps, AppState> {
 }
 
 const mapStateToProps = (state: RootState) => {
+  console.log("State:", state);
   return {
     localFile: state.localFile,
     activeDcmIndex: state.activeDcmIndex,

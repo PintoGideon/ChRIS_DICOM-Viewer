@@ -1,9 +1,11 @@
-export interface ModalProps {
+import { PropsFromRedux } from "./index";
+
+export type ModalProps = PropsFromRedux & {
   isModalOpen: boolean;
   files: File[];
   onClose: () => void;
   origin: string;
-}
+};
 
 export type Item = {
   columns: number;

@@ -13,6 +13,7 @@ import * as cornerstoneWebImageLoader from "cornerstone-web-image-loader";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import * as dicomParser from "dicom-parser";
 import { capitalize } from "@patternfly/react-core";
+import { Item } from "../OpenMultipleFilesDlg/types";
 
 cornerstoneTools.external.cornerstone = cornerstone;
 cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
@@ -30,12 +31,14 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
   localFile: File | null;
   mprPlane: string;
   PatientsName: string;
-  filename: string;
+  fileName: string;
   image: any;
   isDicom: boolean;
   numberOfFrames: number;
   sopInstanceUid: string;
   layoutIndex: number;
+  files: Item[] | null;
+  sliceIndex: number;
 
   constructor(props: DicomProps) {
     super(props);
@@ -43,12 +46,15 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
     this.localFile = null;
     this.mprPlane = "";
     this.PatientsName = "";
-    this.filename = "";
+    this.fileName = "";
     this.image = null;
     this.isDicom = false;
     this.numberOfFrames = 1;
     this.sopInstanceUid = "";
     this.layoutIndex = 0;
+    this.files = null;
+    this.sliceIndex = 0;
+
     this.state = {
       visibleOpenUrlDlg: false,
       progress: null,
@@ -75,12 +81,34 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
 
   onImageLoaded = (e: any) => {};
 
+  displayImageFromFiles = (index: number) => {
+    const files: Item[] | null =
+      this.files === null ? this.props.files : this.files;
+    const image = files[index].image;
+    const imageId = files[index].imageId;
+    this.fileName = files[index].name;
+    this.sliceIndex = index;
+    const element = this.dicomImage;
+    element?.addEventListener("cornerstoneimagerendered", this.onImageRendered);
+    cornerstone.enable(element);
+    this.image = image;
+    this.isDicom = true;
+    //this.PatientsName = image.data.string("x00100010");
+    //this.numberOfFrames = image.data.intString("x00280008");
+    cornerstone.displayImage(element, image);
+  };
+
   runTool = (toolName: string, opt: any) => {
     console.log("Run Tool called", toolName, opt);
     switch (toolName) {
       case "openLocalFs": {
         cornerstone.disable(this.dicomImage);
         this.loadImage(opt);
+        break;
+      }
+      case "openImage": {
+        cornerstone.disable(this.dicomImage);
+        this.displayImageFromFiles(opt);
         break;
       }
     }
@@ -189,7 +217,7 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
 
     if (localFile !== undefined) {
       imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(localFile);
-      this.filename = localFile.name;
+      this.fileName = localFile.name;
       size = localFile.size;
     }
     cornerstone.loadAndCacheImage(imageId).then((image: any) => {
@@ -324,6 +352,7 @@ const mapStateToProps = (state: RootState) => {
     layout: state.layout,
     activeDcmIndex: state.activeDcmIndex,
     isOpen: state.isOpen,
+    files: state.files,
   };
 };
 
