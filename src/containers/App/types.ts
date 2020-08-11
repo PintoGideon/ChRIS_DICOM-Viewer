@@ -1,12 +1,19 @@
-export interface AppProps {
+import { PropsFromRedux } from "./index";
+
+export type AppProps = PropsFromRedux & {
   classes?: any;
   dicomdir?: any;
   activeDcmIndex?: number;
   isOpen?: [];
-}
+};
 
 export interface AppState {
   isExpanded: boolean;
   visibleMainMenu: boolean;
   visibleFileManager: boolean;
+  openMenu: boolean;
+  visibleOpenMultipleFilesDlg: boolean;
+  visibleZippedFileDlg: boolean;
+  sliceIndex: number;
+  sliceMax: number;
 }

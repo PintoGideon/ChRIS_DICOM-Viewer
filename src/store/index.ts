@@ -1,10 +1,9 @@
 import { createStore } from "redux";
-import storeReducer from "../reducers/index";
+import storeReducer from "./reducers";
 
 let initialState = {
   localFile: null,
   fsFile: null,
-  //allFiles: null,
   files: null,
   series: null,
   isOpen: new Array(16).fill(false),

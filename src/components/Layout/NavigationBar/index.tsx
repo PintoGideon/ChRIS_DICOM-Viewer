@@ -18,6 +18,7 @@ const Navigation: React.FC<NavProps> = ({ toggleMenu }) => {
       <NavList>
         <NavItem>
           <BarsIcon
+            size="md"
             className="nav-bar__icon"
             aria-label="menu"
             onClick={toggleMenu}
