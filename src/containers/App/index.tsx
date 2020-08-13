@@ -245,7 +245,7 @@ class App extends PureComponent<AppProps, AppState> {
             showFileOpen={this.showFileOpen}
             toolExecute={this.toolExecute}
           />
-          <div style={{ height: "calc(100vh - 48px)" }}>
+          <div style={{ height: "calc(100vh)", width: "100%" }}>
             {this.buildLayoutGrid()}
           </div>
         </div>
