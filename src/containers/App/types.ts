@@ -16,4 +16,5 @@ export interface AppState {
   visibleZippedFileDlg: boolean;
   sliceIndex: number;
   sliceMax: number;
+  openImageEdit: boolean;
 }

@@ -20,6 +20,7 @@ export default function storeReducer(state = {}, action: any) {
       };
 
     case FILES_STORE:
+      console.log("Files", action.files);
       return {
         ...state,
         files: action.files,

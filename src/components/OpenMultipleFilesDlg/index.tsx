@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Dispatch } from "redux";
 import { connect, ConnectedProps } from "react-redux";
 import { Modal } from "@patternfly/react-core";
-import { ModalProps, Item } from "./types";
+import { ModalProps, Item, Image } from "./types";
 import * as cornerstone from "cornerstone-core";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import {
@@ -31,16 +31,9 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
   files,
   origin,
   onClose,
+  filesStore,
 }) => {
-  const [modalState, setModalState] = React.useState({
-    progress: 0,
-    cancel: false,
-  });
-
-  let items: Item[] = [];
-  let count = 0;
-  let step = 0;
-
+  let items = useRef<Item[]>([]);
   React.useEffect(() => {
     let imageIds: string[] = [];
     for (let i = 0; i < files.length; i++) {
@@ -56,13 +49,7 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (modalState.cancel) {
-        filesStore(null);
-        close();
-        return;
-      }
-      console.log("Image Ids", imageIds[i]);
-      cornerstone.loadImage(imageIds[i]).then((image: any) => {
+      cornerstone.loadImage(imageIds[i]).then((image: Image) => {
         const patientName = getDicomPatientName(image);
 
         const studyId = getDicomStudyId(image);
@@ -146,10 +133,10 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
             },
           };
         }
-        items.push(item);
+        items.current.push(item);
+        filesStore(items.current);
+        close();
       });
-      filesStore(items);
-      // close();
     }
   }, []);
 
