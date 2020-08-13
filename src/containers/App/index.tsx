@@ -3,13 +3,13 @@ import { Dispatch } from "redux";
 import { connect, ConnectedProps } from "react-redux";
 import { AppProps, AppState } from "./types";
 import Navigation from "../../components/Layout/NavigationBar";
-import Drawer from "../../components/Layout/Drawer";
+import SideNavigation from "../../components/Layout/SideNavigation";
 import OpenMultipleFilesDlg from "../../components/OpenMultipleFilesDlg";
 import { getSettingsFsView } from "../../functions";
 import { localFileStore, setLayout } from "../../store/actions";
 import { RootState } from "../../store/types";
-
 import DicomViewer from "../../components/DicomViewer";
+import "./App.css";
 
 interface FileList {
   readonly length: number;
@@ -19,7 +19,7 @@ interface FileList {
 
 class App extends PureComponent<AppProps, AppState> {
   files: File[];
-  file: File | null;//url: string;
+  file: File | null; //url: string;
   folder: null;
   dicomViewersActive: never[];
   dicomViewersSameStudy: never[];
@@ -56,6 +56,7 @@ class App extends PureComponent<AppProps, AppState> {
       visibleZippedFileDlg: false,
       sliceIndex: 0,
       sliceMax: 1,
+      openImageEdit: false,
     };
   }
 
@@ -72,12 +73,19 @@ class App extends PureComponent<AppProps, AppState> {
         dicomViewersRefs={this.dicomViewersRefs}
         overlay={true}
         visible={true}
-        //onLoadedImage={this.onLoadedImage}
         //onRenderedImage={this.onRenderedImage}
         //listOpenFilesPreviousFrame={this.listOpenFilesPreviousFrame}
         //listOpenFilesNextFrame={this.listOpenFilesNextFrame}
       />
     );
+  };
+
+  onRenderedImage = () => {};
+
+  toggleImageEdit = () => {
+    this.setState({
+      openImageEdit: !this.state.openImageEdit,
+    });
   };
 
   onClick = () => {
@@ -190,6 +198,8 @@ class App extends PureComponent<AppProps, AppState> {
     );
   };
 
+  toolExecute = (tool: string) => {};
+
   hideOpenMultipleFilesDlg = () => {
     this.setState({
       visibleOpenMultipleFilesDlg: false,
@@ -210,6 +220,7 @@ class App extends PureComponent<AppProps, AppState> {
       visibleMainMenu,
       openMenu,
       visibleOpenMultipleFilesDlg,
+      openImageEdit,
     } = this.state;
 
     return (
@@ -223,17 +234,22 @@ class App extends PureComponent<AppProps, AppState> {
             origin="local"
           />
         ) : null}
-
-        <Drawer
-          isExpanded={visibleMainMenu}
-          toggleMenu={this.toggleOpenMenu}
-          openMenu={openMenu}
-          toggleOpenMenu={this.toggleOpenMenu}
-          showFileOpen={this.showFileOpen}
-        />
-        <div style={{ height: "calc(100vh-48px)" }}>
-          {this.buildLayoutGrid()}
+        <div className="page-container">
+          <SideNavigation
+            isExpanded={visibleMainMenu}
+            toggleMenu={this.toggleOpenMenu}
+            toggleImageEdit={this.toggleImageEdit}
+            openMenu={openMenu}
+            openImageEdit={openImageEdit}
+            toggleOpenMenu={this.toggleOpenMenu}
+            showFileOpen={this.showFileOpen}
+            toolExecute={this.toolExecute}
+          />
+          <div style={{ height: "calc(100vh - 48px)" }}>
+            {this.buildLayoutGrid()}
+          </div>
         </div>
+
         <div>
           <input
             type="file"
@@ -250,7 +266,6 @@ class App extends PureComponent<AppProps, AppState> {
 }
 
 const mapStateToProps = (state: RootState) => {
-  console.log("State:", state);
   return {
     localFile: state.localFile,
     activeDcmIndex: state.activeDcmIndex,

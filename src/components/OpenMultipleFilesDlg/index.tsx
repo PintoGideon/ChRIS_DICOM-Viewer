@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { Dispatch } from "redux";
 import { connect, ConnectedProps } from "react-redux";
 import { Modal } from "@patternfly/react-core";
-import { ModalProps, Item } from "./types";
+import { ModalProps, Item, Image } from "./types";
 import * as cornerstone from "cornerstone-core";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import {
@@ -49,7 +49,7 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      cornerstone.loadImage(imageIds[i]).then((image: any) => {
+      cornerstone.loadImage(imageIds[i]).then((image: Image) => {
         const patientName = getDicomPatientName(image);
 
         const studyId = getDicomStudyId(image);
@@ -75,7 +75,6 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
             : dicomDateTimeToLocale(`${studyDate}.${studyTime}`);
 
         let item = null;
-        let itemsToPush: Item[] = [];
 
         if (origin === "local") {
           item = {
@@ -142,11 +141,8 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
   }, []);
 
   const close = () => {
-    console.log("Close called");
     onClose();
   };
-
-  console.log("IsModalOpen", isModalOpen);
 
   return (
     <Modal width={"50%"} title="Multiple Files Dialog box" isOpen={isModalOpen}>
