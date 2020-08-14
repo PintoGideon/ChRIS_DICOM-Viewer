@@ -16,13 +16,11 @@ export interface NavProps {
   openImageEdit: boolean;
   toggleImageEdit: () => void;
   toolExecute: (tool: string) => void;
+  openTools: boolean;
+  toggleTools: () => void;
 }
 
 class SideNavigation extends React.Component<NavProps> {
-  constructor(props: NavProps) {
-    super(props);
-  }
-
   onSelect = (result: {
     groupId: React.ReactText;
     itemId: React.ReactText;
@@ -35,9 +33,18 @@ class SideNavigation extends React.Component<NavProps> {
     if (result.itemId === "nav-2_item_2") {
       this.props.toggleImageEdit();
     }
+    if (result.groupId === "nav-3") {
+      this.props.toggleTools();
+    }
   };
   render() {
-    const { openImageEdit, openMenu, showFileOpen, toolExecute } = this.props;
+    const {
+      openImageEdit,
+      openMenu,
+      showFileOpen,
+      toolExecute,
+      openTools,
+    } = this.props;
     return (
       <Nav
         style={{
@@ -69,6 +76,46 @@ class SideNavigation extends React.Component<NavProps> {
               itemId="nav-2_item-2"
             >
               Invert
+            </NavItem>
+          </NavExpandable>
+          <NavExpandable title="Tools" groupId="nav-3" isActive={openTools}>
+            <NavItem
+              onClick={() => toolExecute("notool")}
+              preventDefault
+              groupId="nav-3"
+              itemId="nav-1_item-3"
+            >
+              No Tool
+            </NavItem>
+            <NavItem
+              preventDefault
+              groupId="nav-3"
+              onClick={() => toolExecute("Wwwc")}
+              itemId="nav-1_item-4"
+            >
+              WW/WC
+            </NavItem>
+            <NavItem
+              preventDefault
+              onClick={() => toolExecute("Pan")}
+              itemId="nav-1__item-5"
+            >
+              Pan
+            </NavItem>
+            <NavItem
+              preventDefault
+              onClick={() => toolExecute("Zoom")}
+              itemId="nav-1__item-6"
+            >
+              Zoom
+            </NavItem>
+
+            <NavItem
+              preventDefault
+              onClick={() => toolExecute("Magnify")}
+              itemId="nav-1__item-6"
+            >
+              Magnify
             </NavItem>
           </NavExpandable>
         </NavList>

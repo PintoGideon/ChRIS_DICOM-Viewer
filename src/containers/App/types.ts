@@ -17,4 +17,5 @@ export interface AppState {
   sliceIndex: number;
   sliceMax: number;
   openImageEdit: boolean;
+  openTools: boolean;
 }

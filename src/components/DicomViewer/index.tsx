@@ -14,6 +14,7 @@ import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import * as dicomParser from "dicom-parser";
 import { capitalize } from "@patternfly/react-core";
 import { Item } from "../OpenMultipleFilesDlg/types";
+import { isMobile } from "react-device-detect";
 
 cornerstoneTools.external.cornerstone = cornerstone;
 cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
@@ -73,7 +74,13 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
     );
     dcmRef(this);
     this.layoutIndex = this.props.index;
+    const element = document.getElementById(`viewer-${this.props.index}`);
+    if (element) {
+      element.addEventListener("wheel", this.handlerMouseScroll);
+    }
   }
+
+  handlerMouseScroll = (e: Event) => {};
 
   componentWillUnmount() {
     this.props.runTool(undefined);
@@ -93,6 +100,20 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
   };
 
   onImageLoaded = (e: any) => {};
+
+  enableTool = () => {
+    const WwwcTool = cornerstoneTools.WwwcTool;
+    const PanTool = cornerstoneTools.PanTool;
+    const ZoomTouchPinchTool = cornerstoneTools.ZoomTouchPinchTool;
+    const ZoomTool = cornerstoneTools.ZoomTool;
+    const MagnifyTool = cornerstoneTools.MagnifyTool;
+
+    cornerstoneTools.addTool(MagnifyTool);
+    cornerstoneTools.addTool(WwwcTool);
+    cornerstoneTools.addTool(PanTool);
+    cornerstoneTools.addTool(ZoomTouchPinchTool);
+    cornerstoneTools.addTool(ZoomTool);
+  };
 
   displayImageFromFiles = (index: number) => {
     const files: Item[] | null =
@@ -114,27 +135,24 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
       currentImageIdIndex: number;
       imageIds: string[];
     } = { currentImageIdIndex: 0, imageIds: [] };
-    if (this.numberOfFrames > 0) {
-      let imageIds = [];
-      for (var i = 0; i < this.numberOfFrames; i++) {
-        imageIds.push(imageId + "?frame" + i);
-      }
-      stack.imageIds = imageIds;
+
+    let imageIds = [];
+    for (var i = 0; i < this.numberOfFrames; i++) {
+      imageIds.push(imageId + "?frame" + i);
     }
+    stack.imageIds = imageIds;
 
     cornerstone.displayImage(element, image);
+    this.enableTool();
 
-    if (this.numberOfFrames > 1) {
-      cornerstoneTools.addStackStateManager(element, ["stack", "playClip"]);
-      cornerstoneTools.addToolState(element, "stack", stack);
-      this.setState({ frame: 1 });
+    cornerstoneTools.addStackStateManager(element, ["stack", "playClip"]);
+    cornerstoneTools.addToolState(element, "stack", stack);
+    this.setState({ frame: 1 });
 
-      // Load the possible measurements from DB and save in the store.
-    }
+    // Load the possible measurements from DB and save in the store.
   };
 
   runTool = (toolName: string, opt: any) => {
-    console.log("Run Tool called", toolName, opt);
     switch (toolName) {
       case "openLocalFs": {
         cornerstone.disable(this.dicomImage);
@@ -145,6 +163,22 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
         cornerstone.disable(this.dicomImage);
         this.displayImageFromFiles(opt);
         break;
+      }
+      case "Wwwc": {
+        cornerstoneTools.setToolActive("Wwwc", {
+          mouseButtonMash: 1,
+        });
+        break;
+      }
+      case "Pan": {
+        cornerstoneTools.setToolActive("Pan", {
+          mouseButtonMask: 1,
+        });
+      }
+      case "Zoom": {
+        cornerstoneTools.setToolActive(isMobile ? "ZoomTouchPinch" : "Zoom", {
+          mouseButtonMask: 1,
+        });
       }
     }
   };

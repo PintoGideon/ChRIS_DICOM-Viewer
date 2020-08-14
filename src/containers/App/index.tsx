@@ -10,6 +10,7 @@ import { localFileStore, setLayout } from "../../store/actions";
 import { RootState } from "../../store/types";
 import DicomViewer from "../../components/DicomViewer";
 import "./App.css";
+import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from "constants";
 
 interface FileList {
   readonly length: number;
@@ -27,7 +28,9 @@ class App extends PureComponent<AppProps, AppState> {
   dicomViewersRefs: any[];
   dicomViewers: any[];
   fileOpen: React.RefObject<HTMLInputElement>;
+  isMultipleFiles: boolean;
   runTool: (toolName: string, opt?: any) => void;
+  isSliceChange: boolean;
 
   constructor(props: AppProps) {
     super(props);
@@ -40,6 +43,8 @@ class App extends PureComponent<AppProps, AppState> {
     this.dicomViewersActiveSamePlane = [];
     this.dicomViewersRefs = [];
     this.dicomViewers = [];
+    this.isMultipleFiles = false;
+    this.isSliceChange = false;
     this.runTool = () => {};
 
     for (let i = 0; i < 16; i++) {
@@ -52,6 +57,7 @@ class App extends PureComponent<AppProps, AppState> {
       visibleMainMenu: false,
       visibleFileManager: false,
       openMenu: false,
+      openTools: false,
       visibleOpenMultipleFilesDlg: false,
       visibleZippedFileDlg: false,
       sliceIndex: 0,
@@ -80,6 +86,19 @@ class App extends PureComponent<AppProps, AppState> {
     );
   };
 
+  //----------------------------------------------
+  // #regiion FILES/SLICE MANIPULATION
+
+  handleOpenImage = (index: number) => {};
+
+  listOpenFilesFirstFrame = () => {
+    const index = 0;
+    this.setState({ sliceIndex: index }, () => {
+      this.isSliceChange = true;
+      this.handleOpenImage(index);
+    });
+  };
+
   onRenderedImage = () => {};
 
   toggleImageEdit = () => {
@@ -87,17 +106,22 @@ class App extends PureComponent<AppProps, AppState> {
       openImageEdit: !this.state.openImageEdit,
     });
   };
+  toggleOpenMenu = () => {
+    this.setState({
+      openMenu: !this.state.openMenu,
+    });
+  };
+
+  toggleTools = () => {
+    this.setState({
+      openTools: !this.state.openTools,
+    });
+  };
 
   onClick = () => {
     const isExpanded = !this.state.isExpanded;
     this.setState({
       isExpanded,
-    });
-  };
-
-  toggleOpenMenu = () => {
-    this.setState({
-      openMenu: !this.state.openMenu,
     });
   };
 
@@ -198,7 +222,12 @@ class App extends PureComponent<AppProps, AppState> {
     );
   };
 
-  toolExecute = (tool: string) => {};
+  toolExecute = (tool: string) => {
+    console.log("Tool", tool);
+    this.setState({});
+
+    this.runTool(tool);
+  };
 
   hideOpenMultipleFilesDlg = () => {
     this.setState({
@@ -208,7 +237,6 @@ class App extends PureComponent<AppProps, AppState> {
   };
 
   openMultipleFilesCompleted = () => {
-    console.log("Files", this.props.files);
     if (this.props.files.length !== null) {
       this.changeLayout(1, 1);
       this.runTool("openImage", 0);
@@ -221,7 +249,12 @@ class App extends PureComponent<AppProps, AppState> {
       openMenu,
       visibleOpenMultipleFilesDlg,
       openImageEdit,
+      openTools,
     } = this.state;
+
+    if (this.files.length > 1) {
+      this.isMultipleFiles = true;
+    }
 
     return (
       <>
@@ -238,12 +271,20 @@ class App extends PureComponent<AppProps, AppState> {
           <SideNavigation
             isExpanded={visibleMainMenu}
             toggleMenu={this.toggleOpenMenu}
-            toggleImageEdit={this.toggleImageEdit}
             openMenu={openMenu}
-            openImageEdit={openImageEdit}
             toggleOpenMenu={this.toggleOpenMenu}
+            openImageEdit={openImageEdit}
+            toggleImageEdit={this.toggleImageEdit}
+            openTools={openTools}
+            toggleTools={this.toggleTools}
             showFileOpen={this.showFileOpen}
             toolExecute={this.toolExecute}
+            isMultipleFiles={this.isMultipleFiles}
+            listOpenFilesFirstFrame={this.listOpenFilesFirstFrame}
+            listOpenFilesPreviousFrame={this.listOpenFilesPreviousFrame}
+            listOpenFilesScrolling={this.listOpenFilesScrolling}
+            listOpenFilesNextFrame={this.listOpenFilesNextFrame}
+            listOpenFilesLastFrame={this.listOpenFilesLastFrame}
           />
           <div style={{ height: "calc(100vh)", width: "100%" }}>
             {this.buildLayoutGrid()}
