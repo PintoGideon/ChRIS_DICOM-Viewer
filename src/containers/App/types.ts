@@ -18,4 +18,9 @@ export interface AppState {
   sliceMax: number;
   openImageEdit: boolean;
   openTools: boolean;
+  visibleMprOrthogonal: boolean;
+  visibleMprSagittal: boolean;
+  visibleMprAxial: boolean;
+  visibleCoronal: boolean;
+  listOpenFilesScrolling: boolean;
 }

@@ -144,7 +144,6 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
 
     cornerstone.displayImage(element, image);
     this.enableTool();
-
     cornerstoneTools.addStackStateManager(element, ["stack", "playClip"]);
     cornerstoneTools.addToolState(element, "stack", stack);
     this.setState({ frame: 1 });

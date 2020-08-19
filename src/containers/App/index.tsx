@@ -10,13 +10,21 @@ import { localFileStore, setLayout } from "../../store/actions";
 import { RootState } from "../../store/types";
 import DicomViewer from "../../components/DicomViewer";
 import "./App.css";
-import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from "constants";
 
 interface FileList {
   readonly length: number;
   item(index: number): File | null;
   [index: number]: File;
 }
+
+interface Timer {
+  hasRef(): boolean;
+  ref(): this;
+  refresh(): this;
+  unref(): this;
+}
+
+export type DicomViewerRef = typeof DicomViewer;
 
 class App extends PureComponent<AppProps, AppState> {
   files: File[];
@@ -31,12 +39,12 @@ class App extends PureComponent<AppProps, AppState> {
   isMultipleFiles: boolean;
   runTool: (toolName: string, opt?: any) => void;
   isSliceChange: boolean;
+  timerScrolling: Timer | null;
 
   constructor(props: AppProps) {
     super(props);
     this.files = [];
     this.folder = null;
-    //this.url = null;
     this.file = null;
     this.dicomViewersActive = [];
     this.dicomViewersSameStudy = [];
@@ -45,6 +53,7 @@ class App extends PureComponent<AppProps, AppState> {
     this.dicomViewers = [];
     this.isMultipleFiles = false;
     this.isSliceChange = false;
+    this.timerScrolling = null;
     this.runTool = () => {};
 
     for (let i = 0; i < 16; i++) {
@@ -63,6 +72,11 @@ class App extends PureComponent<AppProps, AppState> {
       sliceIndex: 0,
       sliceMax: 1,
       openImageEdit: false,
+      visibleMprOrthogonal: false,
+      visibleMprSagittal: false,
+      visibleMprAxial: false,
+      visibleCoronal: false,
+      listOpenFilesScrolling: false,
     };
   }
 
@@ -89,7 +103,11 @@ class App extends PureComponent<AppProps, AppState> {
   //----------------------------------------------
   // #regiion FILES/SLICE MANIPULATION
 
-  handleOpenImage = (index: number) => {};
+  mprPlanePosition = (force = false, index = this.props.activeDcmIndex) => {};
+
+  handleOpenImage = (index: number) => {
+    this.runTool("openImage", index);
+  };
 
   listOpenFilesFirstFrame = () => {
     const index = 0;
@@ -97,6 +115,55 @@ class App extends PureComponent<AppProps, AppState> {
       this.isSliceChange = true;
       this.handleOpenImage(index);
     });
+  };
+
+  listOpenFilesPreviousFrame = () => {
+    let index = this.state.sliceIndex;
+    index = index === 0 ? this.state.sliceMax - 1 : index - 1;
+    this.setState(
+      {
+        sliceIndex: index,
+      },
+      () => {
+        this.isSliceChange = true;
+        this.handleOpenImage(index);
+      }
+    );
+  };
+
+  listOpenFilesNextFrame = () => {
+    let index = this.state.sliceIndex;
+    index = index === this.state.sliceMax - 1 ? 0 : index + 1;
+    this.setState({ sliceIndex: index }, () => {
+      this.isSliceChange = true;
+      this.handleOpenImage(index);
+    });
+  };
+
+  listOpenFilesLastFrame = () => {
+    const index = this.state.sliceMax - 1;
+    this.setState({ sliceIndex: index }, () => {
+      this.isSliceChange = true;
+      this.handleOpenImage(index);
+    });
+  };
+
+  listOpenFilesScrolling = () => {
+    const scrolling = this.state.listOpenFilesScrolling;
+    this.setState(
+      {
+        listOpenFilesScrolling: !scrolling,
+      },
+      () => {
+        if (scrolling) {
+          if (this.timerScrolling) clearInterval(this.timerScrolling);
+        } else {
+          this.timerScrolling = setInterval(() => {
+            this.listOpenFilesNextFrame();
+          }, 500);
+        }
+      }
+    );
   };
 
   onRenderedImage = () => {};
@@ -237,9 +304,13 @@ class App extends PureComponent<AppProps, AppState> {
   };
 
   openMultipleFilesCompleted = () => {
-    if (this.props.files.length !== null) {
+    if (this.props.files !== null) {
       this.changeLayout(1, 1);
       this.runTool("openImage", 0);
+      const sliceMax = this.props.files.length;
+      this.setState({
+        sliceMax: sliceMax,
+      });
     }
   };
 
@@ -282,11 +353,12 @@ class App extends PureComponent<AppProps, AppState> {
             isMultipleFiles={this.isMultipleFiles}
             listOpenFilesFirstFrame={this.listOpenFilesFirstFrame}
             listOpenFilesPreviousFrame={this.listOpenFilesPreviousFrame}
-            listOpenFilesScrolling={this.listOpenFilesScrolling}
             listOpenFilesNextFrame={this.listOpenFilesNextFrame}
             listOpenFilesLastFrame={this.listOpenFilesLastFrame}
+            listOpenFilesScrolling={this.listOpenFilesScrolling}
+            listStateOpenFilesScrolling={this.state.listOpenFilesScrolling}
           />
-          <div style={{ height: "calc(100vh)", width: "100%" }}>
+          <div style={{ height: "calc(100vh - 48px)", width: "100%" }}>
             {this.buildLayoutGrid()}
           </div>
         </div>

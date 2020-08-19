@@ -1,5 +1,4 @@
-import DicomViewer, { PropsFromRedux } from "./index";
-
+import { PropsFromRedux } from "./index";
 export type DicomProps = PropsFromRedux & {
   index: number;
   dcmRef: (ref: any) => void;

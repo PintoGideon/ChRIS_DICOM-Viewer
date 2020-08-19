@@ -5,20 +5,17 @@ import {
   NavItem,
   NavList,
   NavItemSeparator,
+  Button,
 } from "@patternfly/react-core";
-
-export interface NavProps {
-  isExpanded: boolean;
-  openMenu: boolean;
-  toggleMenu: () => void;
-  toggleOpenMenu: () => void;
-  showFileOpen: () => void;
-  openImageEdit: boolean;
-  toggleImageEdit: () => void;
-  toolExecute: (tool: string) => void;
-  openTools: boolean;
-  toggleTools: () => void;
-}
+import {
+  AngleDoubleLeftIcon,
+  AngleDoubleRightIcon,
+  AngleLeftIcon,
+  AngleRightIcon,
+  PlayIcon,
+  PauseIcon,
+} from "@patternfly/react-icons";
+import { NavProps } from "./types";
 
 class SideNavigation extends React.Component<NavProps> {
   onSelect = (result: {
@@ -44,12 +41,19 @@ class SideNavigation extends React.Component<NavProps> {
       showFileOpen,
       toolExecute,
       openTools,
+      isMultipleFiles,
+      listOpenFilesFirstFrame,
+      listOpenFilesPreviousFrame,
+      listOpenFilesScrolling,
+      listStateOpenFilesScrolling,
+      listOpenFilesNextFrame,
+      listOpenFilesLastFrame,
     } = this.props;
     return (
       <Nav
         style={{
           backgroundColor: "grey",
-          width: "10%",
+          width: "12%",
         }}
         onSelect={this.onSelect}
       >
@@ -119,6 +123,32 @@ class SideNavigation extends React.Component<NavProps> {
             </NavItem>
           </NavExpandable>
         </NavList>
+
+        {isMultipleFiles && (
+          <NavList>
+            <div>
+              <Button onClick={listOpenFilesFirstFrame}>
+                <AngleDoubleLeftIcon size="sm" />
+              </Button>
+              <Button>
+                <AngleLeftIcon onClick={listOpenFilesPreviousFrame} size="sm" />
+              </Button>
+              <Button onClick={listOpenFilesScrolling}>
+                {listStateOpenFilesScrolling ? (
+                  <PauseIcon size="sm" />
+                ) : (
+                  <PlayIcon size="sm" />
+                )}
+              </Button>
+              <Button onClick={listOpenFilesNextFrame}>
+                <AngleRightIcon size="sm" />
+              </Button>
+              <Button onClick={listOpenFilesLastFrame}>
+                <AngleDoubleRightIcon size="sm" />
+              </Button>
+            </div>
+          </NavList>
+        )}
       </Nav>
     );
   }
