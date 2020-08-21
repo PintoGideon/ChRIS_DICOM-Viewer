@@ -53,7 +53,7 @@ class SideNavigation extends React.Component<NavProps> {
       <Nav
         style={{
           backgroundColor: "grey",
-          width: "12%",
+          width: "11%",
         }}
         onSelect={this.onSelect}
       >

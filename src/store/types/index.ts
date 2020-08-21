@@ -1,4 +1,4 @@
-import { Item } from "../../components/OpenMultipleFilesDlg/types";
+import { Item, Image } from "../../components/OpenMultipleFilesDlg/types";
 export const DCM_IS_OPEN = "DCM_IS_OPEN";
 export const LOCALFILE_STORE = "LOCALFILE_STORE";
 export const LAYOUT = "LAYOUT";
@@ -9,10 +9,5 @@ export interface RootState {
   activeDcmIndex: number;
   layout: number[];
   isOpen: [];
-  files: Item[];
+  files: Item[] | Image[];
 }
-
-
-
-
- 
