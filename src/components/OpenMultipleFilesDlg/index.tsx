@@ -5,6 +5,7 @@ import { Modal } from "@patternfly/react-core";
 import { ModalProps, Item, Image } from "./types";
 import * as cornerstone from "cornerstone-core";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
+import * as cornerstoneFileImageLoader from "cornerstone-file-image-loader";
 import {
   getDicomPatientName,
   getDicomStudyId,
@@ -23,6 +24,7 @@ import {
   getDicomEchoNumber,
   getFileNameCorrect,
   dicomDateTimeToLocale,
+  isFileImage,
 } from "../../functions";
 import { filesStore } from "../../store/actions";
 
@@ -33,108 +35,113 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
   onClose,
   filesStore,
 }) => {
+  console.log("Files from local upload", files);
   let items = useRef<Item[]>([]);
+  let otherItems = useRef<Image[]>([]);
   React.useEffect(() => {
     let imageIds: string[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      if (origin === "local") {
-        imageIds.push(cornerstoneWADOImageLoader.wadouri.fileManager.add(file));
+      if (isFileImage(file) && origin === "local") {
+        imageIds.push(cornerstoneFileImageLoader.fileManager.add(file));
       } else {
-        imageIds.push(
-          cornerstoneWADOImageLoader.wadouri.fileManager.addBuffer(file)
-        );
+        imageIds.push(cornerstoneWADOImageLoader.wadouri.fileManager.add(file));
       }
     }
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       cornerstone.loadImage(imageIds[i]).then((image: Image) => {
-        const patientName = getDicomPatientName(image);
+        if (image.imageId.includes("dicomfile")) {
+          const patientName = getDicomPatientName(image);
 
-        const studyId = getDicomStudyId(image);
-        const studyDate = getDicomStudyDate(image);
-        const studyTime = getDicomStudyTime(image);
-        const studyDescription = getDicomStudyDescription(image);
+          const studyId = getDicomStudyId(image);
+          const studyDate = getDicomStudyDate(image);
+          const studyTime = getDicomStudyTime(image);
+          const studyDescription = getDicomStudyDescription(image);
 
-        const seriesDate = getDicomSeriesDate(image);
-        const seriesTime = getDicomSeriesTime(image);
-        const seriesDescription = getDicomSeriesDescription(image);
-        const seriesNumber = getDicomSeriesNumber(image);
+          const seriesDate = getDicomSeriesDate(image);
+          const seriesTime = getDicomSeriesTime(image);
+          const seriesDescription = getDicomSeriesDescription(image);
+          const seriesNumber = getDicomSeriesNumber(image);
 
-        const instanceNumber = getDicomInstanceNumber(image);
-        const sliceDistance = getDicomSliceDistance(image);
-        const echoNumber = getDicomEchoNumber(image);
-        const sliceLocation = getDicomSliceLocation(image);
-        const columns = getDicomColumns(image);
-        const rows = getDicomRows(image);
+          const instanceNumber = getDicomInstanceNumber(image);
+          const sliceDistance = getDicomSliceDistance(image);
+          const echoNumber = getDicomEchoNumber(image);
+          const sliceLocation = getDicomSliceLocation(image);
+          const columns = getDicomColumns(image);
+          const rows = getDicomRows(image);
 
-        const studyDateTime =
-          studyDate === undefined
-            ? undefined
-            : dicomDateTimeToLocale(`${studyDate}.${studyTime}`);
+          const studyDateTime =
+            studyDate === undefined
+              ? undefined
+              : dicomDateTimeToLocale(`${studyDate}.${studyTime}`);
 
-        let item = null;
+          let item = null;
 
-        if (origin === "local") {
-          item = {
-            imageId: imageIds[i],
-            instanceNumber: instanceNumber,
-            name: getFileNameCorrect(file.name),
-            image: image,
-            rows: rows,
-            columns: columns,
-            sliceDistance: sliceDistance,
-            sliceLocation: sliceLocation,
-            patient: {
-              patientName: patientName,
-            },
-            study: {
-              studyId: studyId,
-              studyDate: studyDate,
-              studyTime: studyTime,
-              studyDateTime: studyDateTime,
-              studyDescription: studyDescription,
-            },
-            series: {
-              seriesDate: seriesDate,
-              seriesTime: seriesTime,
-              seriesDescription: seriesDescription,
-              seriesNumber: seriesNumber,
-              echoNumber: echoNumber,
-            },
-          };
+          if (origin === "local") {
+            item = {
+              imageId: imageIds[i],
+              instanceNumber: instanceNumber,
+              name: getFileNameCorrect(file.name),
+              image: image,
+              rows: rows,
+              columns: columns,
+              sliceDistance: sliceDistance,
+              sliceLocation: sliceLocation,
+              patient: {
+                patientName: patientName,
+              },
+              study: {
+                studyId: studyId,
+                studyDate: studyDate,
+                studyTime: studyTime,
+                studyDateTime: studyDateTime,
+                studyDescription: studyDescription,
+              },
+              series: {
+                seriesDate: seriesDate,
+                seriesTime: seriesTime,
+                seriesDescription: seriesDescription,
+                seriesNumber: seriesNumber,
+                echoNumber: echoNumber,
+              },
+            };
+          } else {
+            item = {
+              imageId: imageIds[i],
+              instanceNumber: instanceNumber,
+              name: file.name,
+              image: image,
+              rows: rows,
+              columns: columns,
+              sliceDistance: sliceDistance,
+              sliceLocation: sliceLocation,
+              patient: {
+                patientName: patientName,
+              },
+              study: {
+                studyId: studyId,
+                studyDate: studyDate,
+                studyTime: studyTime,
+                studyDateTime: studyDateTime,
+                studyDescription: studyDescription,
+              },
+              series: {
+                seriesDate: seriesDate,
+                seriesTime: seriesTime,
+                seriesDescription: seriesDescription,
+                seriesNumber: seriesNumber,
+                echoNumber: echoNumber,
+              },
+            };
+          }
+          items.current.push(item);
+          filesStore(items.current);
         } else {
-          item = {
-            imageId: imageIds[i],
-            instanceNumber: instanceNumber,
-            name: file.name,
-            image: image,
-            rows: rows,
-            columns: columns,
-            sliceDistance: sliceDistance,
-            sliceLocation: sliceLocation,
-            patient: {
-              patientName: patientName,
-            },
-            study: {
-              studyId: studyId,
-              studyDate: studyDate,
-              studyTime: studyTime,
-              studyDateTime: studyDateTime,
-              studyDescription: studyDescription,
-            },
-            series: {
-              seriesDate: seriesDate,
-              seriesTime: seriesTime,
-              seriesDescription: seriesDescription,
-              seriesNumber: seriesNumber,
-              echoNumber: echoNumber,
-            },
-          };
+          otherItems.current.push(image);
+          filesStore(otherItems.current);
         }
-        items.current.push(item);
-        filesStore(items.current);
         close();
       });
     }
@@ -153,7 +160,7 @@ const OpenMultipleFilesDlg: React.FC<ModalProps> = ({
 
 const mapDispatchToProps = (dispatch: Dispatch) => {
   return {
-    filesStore: (files: Item[] | null) => dispatch(filesStore(files)),
+    filesStore: (files: Item[] | Image[] | null) => dispatch(filesStore(files)),
   };
 };
 

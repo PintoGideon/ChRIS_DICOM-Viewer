@@ -5,11 +5,14 @@ import { AppProps, AppState } from "./types";
 import Navigation from "../../components/Layout/NavigationBar";
 import SideNavigation from "../../components/Layout/SideNavigation";
 import OpenMultipleFilesDlg from "../../components/OpenMultipleFilesDlg";
+import ExplorerDrawer from "../../components/Layout/ExplorerDrawer";
 import { getSettingsFsView } from "../../functions";
 import { localFileStore, setLayout } from "../../store/actions";
 import { RootState } from "../../store/types";
 import DicomViewer from "../../components/DicomViewer";
 import "./App.css";
+import { groupBy } from "../../functions";
+import { Item } from "../../components/OpenMultipleFilesDlg/types";
 
 interface FileList {
   readonly length: number;
@@ -25,6 +28,13 @@ interface Timer {
 }
 
 export type DicomViewerRef = typeof DicomViewer;
+export type Patient = {
+  list: Map<any, any>;
+  keys: any;
+};
+export type Explorer = {
+  patient?: Patient;
+};
 
 class App extends PureComponent<AppProps, AppState> {
   files: File[];
@@ -40,6 +50,7 @@ class App extends PureComponent<AppProps, AppState> {
   runTool: (toolName: string, opt?: any) => void;
   isSliceChange: boolean;
   timerScrolling: Timer | null;
+  explorer: Explorer;
 
   constructor(props: AppProps) {
     super(props);
@@ -55,6 +66,7 @@ class App extends PureComponent<AppProps, AppState> {
     this.isSliceChange = false;
     this.timerScrolling = null;
     this.runTool = () => {};
+    this.explorer = {};
 
     for (let i = 0; i < 16; i++) {
       this.dicomViewers.push(this.setDcmViewer(i));
@@ -76,6 +88,7 @@ class App extends PureComponent<AppProps, AppState> {
       visibleMprSagittal: false,
       visibleMprAxial: false,
       visibleCoronal: false,
+      visibleExplorer: false,
       listOpenFilesScrolling: false,
     };
   }
@@ -185,13 +198,6 @@ class App extends PureComponent<AppProps, AppState> {
     });
   };
 
-  onClick = () => {
-    const isExpanded = !this.state.isExpanded;
-    this.setState({
-      isExpanded,
-    });
-  };
-
   toggleMainMenu = () => {
     const { visibleMainMenu } = this.state;
 
@@ -205,6 +211,13 @@ class App extends PureComponent<AppProps, AppState> {
         visibleMainMenu: !visibleMainMenu,
       });
     }
+  };
+
+  toggleExplorer = () => {
+    const visible = !this.state.visibleExplorer;
+    this.setState({
+      visibleExplorer: visible,
+    });
   };
 
   showFileOpen = () => {
@@ -311,7 +324,45 @@ class App extends PureComponent<AppProps, AppState> {
       this.setState({
         sliceMax: sliceMax,
       });
+      /*
+
+      const patientList = groupBy(
+        this.props.files,
+        (a: Item) => a.patient.patientName
+      );
+      const patientKeys = [...patientList.keys()];
+      const patient = {
+        list: patientList,
+        keys: patientKeys,
+      };
+      this.explorer = {
+        patient: patient,
+      };
+      if (sliceMax > 1) {
+        this.setState({
+          visibleExplorer: true,
+        });
+      }
     }
+    */
+    }
+  };
+
+  explorerOnSelectSeries = (files: File[], explorerIndex: number) => {
+    let index = this.props.activeDcmIndex;
+    this.files = files;
+    this.runTool("setFiles", this.files);
+    const sliceIndex = 0;
+    const sliceMax = 1;
+    this.setState(
+      {
+        sliceMax,
+        sliceIndex,
+      },
+      () => {
+        this.handleOpenImage(index);
+      }
+    );
   };
 
   render() {
@@ -321,11 +372,13 @@ class App extends PureComponent<AppProps, AppState> {
       visibleOpenMultipleFilesDlg,
       openImageEdit,
       openTools,
+      visibleExplorer,
     } = this.state;
 
     if (this.files.length > 1) {
       this.isMultipleFiles = true;
     }
+    console.log("VisibleExplorer", visibleExplorer);
 
     return (
       <>
@@ -362,6 +415,13 @@ class App extends PureComponent<AppProps, AppState> {
             {this.buildLayoutGrid()}
           </div>
         </div>
+        {visibleExplorer && (
+          <ExplorerDrawer
+            open={visibleExplorer}
+            onClose={this.toggleExplorer}
+            onSelectSeries={this.explorerOnSelectSeries}
+          />
+        )}
 
         <div>
           <input

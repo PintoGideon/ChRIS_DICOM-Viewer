@@ -22,5 +22,6 @@ export interface AppState {
   visibleMprSagittal: boolean;
   visibleMprAxial: boolean;
   visibleCoronal: boolean;
+  visibleExplorer: boolean;
   listOpenFilesScrolling: boolean;
 }

@@ -13,8 +13,9 @@ import * as cornerstoneWebImageLoader from "cornerstone-web-image-loader";
 import * as cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 import * as dicomParser from "dicom-parser";
 import { capitalize } from "@patternfly/react-core";
-import { Item } from "../OpenMultipleFilesDlg/types";
+import { Item, Image } from "../OpenMultipleFilesDlg/types";
 import { isMobile } from "react-device-detect";
+import { isFileImage } from "../../functions";
 
 cornerstoneTools.external.cornerstone = cornerstone;
 cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
@@ -40,6 +41,7 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
   layoutIndex: number;
   files: Item[] | null;
   sliceIndex: number;
+  sliceMax: number;
 
   constructor(props: DicomProps) {
     super(props);
@@ -55,6 +57,7 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
     this.layoutIndex = 0;
     this.files = null;
     this.sliceIndex = 0;
+    this.sliceMax = 1;
 
     this.state = {
       visibleOpenUrlDlg: false,
@@ -116,37 +119,50 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
   };
 
   displayImageFromFiles = (index: number) => {
-    const files: Item[] | null =
+    const files: Item[] | Image[] =
       this.files === null ? this.props.files : this.files;
-    const image = files[index].image;
-    const imageId = files[index].imageId;
-    this.fileName = files[index].name;
-    this.sliceIndex = index;
+    console.log("Files", files);
     const element = this.dicomImage;
     element?.addEventListener("cornerstoneimagerendered", this.onImageRendered);
     cornerstone.enable(element);
-    this.image = image;
-    this.isDicom = true;
 
-    this.PatientsName = image.data.string("x00100010");
-    this.numberOfFrames = image.data.intString("x00280008");
-    this.sopInstanceUid = this.getSopInstanceUID();
     let stack: {
       currentImageIdIndex: number;
       imageIds: string[];
     } = { currentImageIdIndex: 0, imageIds: [] };
 
-    let imageIds = [];
-    for (var i = 0; i < this.numberOfFrames; i++) {
-      imageIds.push(imageId + "?frame" + i);
-    }
-    stack.imageIds = imageIds;
+    const imageId = files[index].imageId;
+    if (imageId.includes("dicomfile")) {
+      const image = (files[index] as Item).image;
 
-    cornerstone.displayImage(element, image);
-    this.enableTool();
-    cornerstoneTools.addStackStateManager(element, ["stack", "playClip"]);
-    cornerstoneTools.addToolState(element, "stack", stack);
-    this.setState({ frame: 1 });
+      this.fileName = (files[index] as Item).name;
+      this.sliceIndex = index;
+
+      this.image = image;
+      this.isDicom = true;
+
+      this.PatientsName = image.data.string("x00100010");
+      this.numberOfFrames = image.data.intString("x00280008");
+      this.sopInstanceUid = this.getSopInstanceUID();
+
+      let imageIds = [];
+      for (var i = 0; i < this.numberOfFrames; i++) {
+        imageIds.push(imageId + "?frame" + i);
+      }
+      stack.imageIds = imageIds;
+
+      cornerstone.displayImage(element, image);
+      this.enableTool();
+      cornerstoneTools.addStackStateManager(element, ["stack", "playClip"]);
+      cornerstoneTools.addToolState(element, "stack", stack);
+      this.setState({ frame: 1 });
+    } else {
+      const image = files[index];
+      this.isDicom = false;
+      cornerstone.displayImage(element, image);
+      this.enableTool();
+      this.setState({ frame: 1 });
+    }
 
     // Load the possible measurements from DB and save in the store.
   };
@@ -165,7 +181,7 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
       }
       case "Wwwc": {
         cornerstoneTools.setToolActive("Wwwc", {
-          mouseButtonMash: 1,
+          mouseButtonMask: 1,
         });
         break;
       }
@@ -173,11 +189,20 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
         cornerstoneTools.setToolActive("Pan", {
           mouseButtonMask: 1,
         });
+        break;
       }
       case "Zoom": {
         cornerstoneTools.setToolActive(isMobile ? "ZoomTouchPinch" : "Zoom", {
           mouseButtonMask: 1,
         });
+        break;
+      }
+
+      case "Magnify": {
+        cornerstoneTools.setToolActive("Magnify", {
+          mouseButtonMask: 1,
+        });
+        break;
       }
     }
   };
@@ -283,18 +308,27 @@ class DicomViewer extends React.Component<DicomProps, DicomState> {
     cornerstone.enable(element);
     let size = 0;
 
-    if (localFile !== undefined) {
+    if (localFile !== undefined && isFileImage(localFile)) {
+      imageId = cornerstoneFileImageLoader.fileManager.add(localFile);
+      cornerstone.loadImage(imageId).then((image: any) => {
+        this.image = image;
+        this.isDicom = false;
+        this.PatientsName = "";
+        cornerstone.displayImage(element, image);
+        this.enableTool();
+      });
+    } else {
       imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(localFile);
-      this.fileName = localFile.name;
-      size = localFile.size;
-    }
-    cornerstone.loadAndCacheImage(imageId).then((image: any) => {
-      //this.hideOpenUrlDlg();
-      this.image = image;
-      this.isDicom = true;
+      cornerstone.loadAndCacheImage(imageId).then((image: any) => {
+        //this.hideOpenUrlDlg();
+        this.image = image;
+        this.isDicom = true;
+        this.PatientsName = image.data.string("x00100010");
 
-      cornerstone.displayImage(element, image);
-    });
+        cornerstone.displayImage(element, image);
+        this.enableTool();
+      });
+    }
   };
 
   render() {
