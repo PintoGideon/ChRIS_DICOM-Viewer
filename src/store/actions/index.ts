@@ -1,5 +1,5 @@
 import { DCM_IS_OPEN, LOCALFILE_STORE, LAYOUT, FILES_STORE } from "../types";
-import { Item } from "../../components/OpenMultipleFilesDlg/types";
+import { Item, Image } from "../../components/OpenMultipleFilesDlg/types";
 
 export const dcmIsOpen = (value: boolean) => {
   return {
@@ -22,7 +22,7 @@ export const setLayout = (row: number, col: number) => {
   };
 };
 
-export const filesStore = (files: Item[] | null) => {
+export const filesStore = (files: Item[] | Image[] | null) => {
   return {
     type: FILES_STORE,
     files: files,

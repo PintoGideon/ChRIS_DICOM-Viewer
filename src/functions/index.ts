@@ -1,5 +1,6 @@
 import { SETTINGS_FSVIEW } from "../constants/settings";
 import { isAndroid, isFirefox, isMobile, isTablet } from "react-device-detect";
+import { Item } from "../components/OpenMultipleFilesDlg/types";
 
 export function getDicomPatientName(image: any) {
   const value = image.data.string("x00100010");
@@ -263,4 +264,25 @@ export function getFileName(file: string) {
     return "";
   }
   return name;
+}
+
+export function groupBy(list: Item[], keyGetter: (item: Item) => string) {
+  const map = new Map();
+
+  list.forEach((item: Item) => {
+    const key = keyGetter(item);
+    const collection = map.get(key);
+    if (!collection) {
+      map.set(key, [item]);
+    } else {
+      collection.push(item);
+    }
+  });
+  return map;
+}
+
+export function isFileImage(file: File | null) {
+  if (file === undefined || file === null) return false;
+  const acceptedImages = ["image/jpeg", "image/png"];
+  return file && acceptedImages.includes(file["type"]);
 }
